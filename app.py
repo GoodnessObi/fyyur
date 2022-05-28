@@ -43,10 +43,11 @@ class Venue(db.Model):
   facebook_link = db.Column(db.String(120))
   genres = db.Column(db.String)
   website_link = db.Column(db.String(120))
+  seeking_talent = db.Column(db.String(120))
   seeking_description = db.Column(db.String(500))
 
   def __repr__(self):
-    return f'<Venue {self.id} {self.name} {self.city} {self.state} {self.phone} {self.address} {self.image_link} {self.facebook_link}>'
+    return f'<Venue {self.id} {self.name} {self.city} {self.state} {self.phone} {self.address} {self.genres} {self.image_link} {self.facebook_link} {self.website_link} {self.seeking_talent} {self.seeking_description}>'
 
   # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
@@ -61,9 +62,13 @@ class Artist(db.Model):
   genres = db.Column(db.String(120))
   image_link = db.Column(db.String(500))
   facebook_link = db.Column(db.String(120))
+  website_link = db.Column(db.String(120))
+  seeking_venue = db.Column(db.String(120))
+  seeking_description = db.Column(db.String(120))
+
 
   def __repr__(self):
-    return f'<Artist {self.id} {self.name} {self.city} {self.state} {self.phone} {self.genres} {self.image_link} {self.facebook_link}>'
+    return f'<Artist {self.id} {self.name} {self.city} {self.state} {self.phone} {self.genres} {self.image_link} {self.facebook_link} {self.website_link} {self.seeking_venue} {self.seeking_description}>'
 
   # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
@@ -245,10 +250,11 @@ def create_venue_submission():
     image_link = request.get_json()['imageLink']
     facebook_link = request.get_json()['facebookLink']
     genres = request.get_json()['genres']
+    seeking_talent = request.get_json()['seekingTalent']
     website_link = request.get_json()['websiteLink']
     seeking_description = request.get_json()['seekingDescription']
 
-    newvenue = Venue(name=name, city=city, state=state, address=address, phone=phone, image_link=image_link, facebook_link=facebook_link, genres=genres, website_link=website_link, seeking_description=seeking_description)
+    newvenue = Venue(name=name, city=city, state=state, address=address, phone=phone, image_link=image_link, facebook_link=facebook_link, genres=genres, website_link=website_link, seeking_talent=seeking_talent,seeking_description=seeking_description)
 
     print('sent in', newvenue)
 
@@ -460,12 +466,38 @@ def create_artist_submission():
   # called upon submitting the new artist listing form
   # TODO: insert form data as a new Venue record in the db, instead
   # TODO: modify data to be the data object returned from db insertion
+  error = False
+  try:
+    print('this', request.get_json())
+    name = request.get_json()['name']
+    city = request.get_json()['city']
+    state = request.get_json()['state']
+    phone = request.get_json()['phone']
+    image_link = request.get_json()['imageLink']
+    facebook_link = request.get_json()['facebookLink']
+    genres = request.get_json()['genres']
+    seeking_venue = request.get_json()['seekingVenue']
+    website_link = request.get_json()['websiteLink']
+    seeking_description = request.get_json()['seekingDescription']
 
-  # on successful db insert, flash success
-  flash('Artist ' + request.form['name'] + ' was successfully listed!')
-  # TODO: on unsuccessful db insert, flash an error instead.
-  # e.g., flash('An error occurred. Artist ' + data.name + ' could not be listed.')
-  return render_template('pages/home.html')
+    newartist = Artist(name=name, city=city, state=state, phone=phone, image_link=image_link, facebook_link=facebook_link, genres=genres, website_link=website_link, seeking_venue=seeking_venue,seeking_description=seeking_description)
+
+    print('sent in', newartist)
+    db.session.add(newartist)
+    db.session.commit()
+  except:
+    error = True
+    db.session.rollback()
+    print(sys.exc_info())
+  finally: 
+    db.session.close()
+  if not error:
+      # flash('Artist ' + request.form['name'] + ' was successfully listed!')
+    # on successful db insert, flash success
+    
+    # TODO: on unsuccessful db insert, flash an error instead.
+    # e.g., flash('An error occurred. Artist ' + data.name + ' could not be listed.')
+    return redirect(url_for('artists'))
 
 
 #  Shows

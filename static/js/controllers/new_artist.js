@@ -1,25 +1,24 @@
-export function addNewVenue (e) {
+export function addNewArtist (e) {
   e.preventDefault();
   console.log(e,'submit')
 
-  const newVenue = {
+  const newArtist = {
     'name': document.getElementById('name').value,
     'city': document.getElementById('city').value,
     'state': document.getElementById('state').value,
-    'address': document.getElementById('address').value,
     'phone': document.getElementById('phone').value,
     'genres': document.getElementById('genres').value,
     'imageLink': document.getElementById('image_link').value,
     'facebookLink': document.getElementById('facebook_link').value,
     'websiteLink': document.getElementById('website_link').value,
-    'seekingTalent': document.getElementById('seeking_talent').value,
+    'seekingVenue': document.getElementById('seeking_venue').value,
     'seekingDescription': document.getElementById('seeking_description').value
   }
 
-  console.log('new-venue:', newVenue)
-  fetch('/venues/create', {
+  console.log('new-artist:', newArtist)
+  fetch('/artists/create', {
     method: 'POST',
-    body: JSON.stringify(newVenue),
+    body: JSON.stringify(newArtist),
     headers: {
       'Content-Type': 'application/json'
     }
@@ -27,7 +26,12 @@ export function addNewVenue (e) {
   .then(function(response) {
     console.log('html', response.url)
     window.location.href = response.url;
+    // return response.json();
   })
+  // .then(function(jsonResponse) {
+  //   console.log('html', jsonResponse.url)
+  //   window.location.href = jsonResponse.url;
+  // })
   .catch(function() {
     console.log('error in fetch');
   })
