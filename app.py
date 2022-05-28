@@ -5,13 +5,15 @@
 import json
 import dateutil.parser
 import babel
-from flask import Flask, render_template, request, Response, flash, redirect, url_for
+from flask import Flask, render_template, request, Response, flash, redirect, url_for, jsonify
 from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 import logging
 from logging import Formatter, FileHandler
 from flask_wtf import Form
 from forms import *
+import sys
 #----------------------------------------------------------------------------#
 # App Config.
 #----------------------------------------------------------------------------#
@@ -20,6 +22,7 @@ app = Flask(__name__)
 moment = Moment(app)
 app.config.from_object('config')
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 # TODO: connect to a local postgresql database
 
@@ -28,32 +31,41 @@ db = SQLAlchemy(app)
 #----------------------------------------------------------------------------#
 
 class Venue(db.Model):
-    __tablename__ = 'Venue'
+  __tablename__ = 'venues'
 
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
-    city = db.Column(db.String(120))
-    state = db.Column(db.String(120))
-    address = db.Column(db.String(120))
-    phone = db.Column(db.String(120))
-    image_link = db.Column(db.String(500))
-    facebook_link = db.Column(db.String(120))
+  id = db.Column(db.Integer, primary_key=True)
+  name = db.Column(db.String)
+  city = db.Column(db.String(120))
+  state = db.Column(db.String(120))
+  address = db.Column(db.String(120))
+  phone = db.Column(db.String(120))
+  image_link = db.Column(db.String(500))
+  facebook_link = db.Column(db.String(120))
+  genres = db.Column(db.String)
+  website_link = db.Column(db.String(120))
+  seeking_description = db.Column(db.String(500))
 
-    # TODO: implement any missing fields, as a database migration using Flask-Migrate
+  def __repr__(self):
+    return f'<Venue {self.id} {self.name} {self.city} {self.state} {self.phone} {self.address} {self.image_link} {self.facebook_link}>'
+
+  # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
 class Artist(db.Model):
-    __tablename__ = 'Artist'
+  __tablename__ = 'artists'
 
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
-    city = db.Column(db.String(120))
-    state = db.Column(db.String(120))
-    phone = db.Column(db.String(120))
-    genres = db.Column(db.String(120))
-    image_link = db.Column(db.String(500))
-    facebook_link = db.Column(db.String(120))
+  id = db.Column(db.Integer, primary_key=True)
+  name = db.Column(db.String)
+  city = db.Column(db.String(120))
+  state = db.Column(db.String(120))
+  phone = db.Column(db.String(120))
+  genres = db.Column(db.String(120))
+  image_link = db.Column(db.String(500))
+  facebook_link = db.Column(db.String(120))
 
-    # TODO: implement any missing fields, as a database migration using Flask-Migrate
+  def __repr__(self):
+    return f'<Artist {self.id} {self.name} {self.city} {self.state} {self.phone} {self.genres} {self.image_link} {self.facebook_link}>'
+
+  # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
 # TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
 
@@ -108,7 +120,7 @@ def venues():
       "num_upcoming_shows": 0,
     }]
   }]
-  return render_template('pages/venues.html', areas=data);
+  return render_template('pages/venues.html', areas=data)
 
 @app.route('/venues/search', methods=['POST'])
 def search_venues():
@@ -219,15 +231,48 @@ def create_venue_form():
 
 @app.route('/venues/create', methods=['POST'])
 def create_venue_submission():
+  error = False
+  # body = {}
+  try:
   # TODO: insert form data as a new Venue record in the db, instead
   # TODO: modify data to be the data object returned from db insertion
+    print('this', request.get_json())
+    name = request.get_json()['name']
+    city = request.get_json()['city']
+    state = request.get_json()['state']
+    address = request.get_json()['address']
+    phone = request.get_json()['phone']
+    image_link = request.get_json()['imageLink']
+    facebook_link = request.get_json()['facebookLink']
+    genres = request.get_json()['genres']
+    website_link = request.get_json()['websiteLink']
+    seeking_description = request.get_json()['seekingDescription']
+
+    newvenue = Venue(name=name, city=city, state=state, address=address, phone=phone, image_link=image_link, facebook_link=facebook_link, genres=genres, website_link=website_link, seeking_description=seeking_description)
+
+    print('sent in', newvenue)
+
+    db.session.add(newvenue)
+    db.session.commit()
+    # body['id'] = newvenue.id
+    # body['name'] = newvenue.name
+  except:
+    error = True
+    db.session.rollback()
+    flash('An error occurred. Venue ' + request.get_json()['name'] + ' could not be listed.')
+    print(sys.exc_info())
+  finally:
+    db.session.close()
+  if not error:
+    flash('Venue ' + request.get_json()['name'] + ' was successfully listed!')
+    return redirect(url_for('venues'))
+    # return render_template('pages/home.html')
 
   # on successful db insert, flash success
-  flash('Venue ' + request.form['name'] + ' was successfully listed!')
+  
   # TODO: on unsuccessful db insert, flash an error instead.
   # e.g., flash('An error occurred. Venue ' + data.name + ' could not be listed.')
   # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
-  return render_template('pages/home.html')
 
 @app.route('/venues/<venue_id>', methods=['DELETE'])
 def delete_venue(venue_id):
