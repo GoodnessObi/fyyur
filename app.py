@@ -104,27 +104,44 @@ def index():
 def venues():
   # TODO: replace with real venues data.
   #       num_upcoming_shows should be aggregated based on number of upcoming shows per venue.
-  data=[{
-    "city": "San Francisco",
-    "state": "CA",
-    "venues": [{
-      "id": 1,
-      "name": "The Musical Hop",
-      "num_upcoming_shows": 0,
-    }, {
-      "id": 3,
-      "name": "Park Square Live Music & Coffee",
-      "num_upcoming_shows": 1,
-    }]
-  }, {
-    "city": "New York",
-    "state": "NY",
-    "venues": [{
-      "id": 2,
-      "name": "The Dueling Pianos Bar",
-      "num_upcoming_shows": 0,
-    }]
-  }]
+  # data=[{
+  #   "city": "San Francisco",
+  #   "state": "CA",
+  #   "venues": [{
+  #     "id": 1,
+  #     "name": "The Musical Hop",
+  #     "num_upcoming_shows": 0,
+  #   }, {
+  #     "id": 3,
+  #     "name": "Park Square Live Music & Coffee",
+  #     "num_upcoming_shows": 1,
+  #   }]
+  # }, {
+  #   "city": "New York",
+  #   "state": "NY",
+  #   "venues": [{
+  #     "id": 2,
+  #     "name": "The Dueling Pianos Bar",
+  #     "num_upcoming_shows": 0,
+  #   }]
+  # }]
+  # data=Venue.query.with_entities(Venue.id, Venue.name).group_by(Venue.city, Venue.state).all()
+  result=Venue.query.all()
+  index_city = {}
+  data = []
+  for res in result:
+    if index_city.get(res.city, None):
+      index = index_city[res.city]
+      data[index]['venues'].append(res)
+    else:
+      index_city[res.city] = len(data)
+      temp = {
+        "city": res.city,
+        "state": res.state,
+        "venues": [res]
+      }
+      data.append(temp)
+  print('data>>>', data)
   return render_template('pages/venues.html', areas=data)
 
 @app.route('/venues/search', methods=['POST'])
@@ -305,6 +322,7 @@ def artists():
   #   "name": "The Wild Sax Band",
   # }]
 
+  # data=Artist.query.with_entities(Artist.id, Artist.name).all()
   data=Artist.query.with_entities(Artist.id, Artist.name).all()
   # data=Artist.query.options(load_only('email', 'id')).all()
   print('data>>>', data)
