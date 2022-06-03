@@ -18,3 +18,4 @@ if (document.getElementById('update-artist-form')) {
   document.getElementById('update-artist-form').onsubmit = updateArtist;
 }
 
+
