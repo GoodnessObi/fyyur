@@ -130,33 +130,41 @@ def search_venues():
 
 @app.route("/venues/<venue_id>")
 def show_venue(venue_id):
-    # shows the venue page with the given venue_id
-    # TODO: replace with real venue data from the venues table, using venue_id
-    # data1={
-    #   "id": 1,
-    #   "name": "The Musical Hop",
-    #   "genres": ["Jazz", "Reggae", "Swing", "Classical", "Folk"],
-    #   "address": "1015 Folsom Street",
-    #   "city": "San Francisco",
-    #   "state": "CA",
-    #   "phone": "123-123-1234",
-    #   "website": "https://www.themusicalhop.com",
-    #   "facebook_link": "https://www.facebook.com/TheMusicalHop",
-    #   "seeking_talent": True,
-    #   "seeking_description": "We are on the lookout for a local artist to play every two weeks. Please call us.",
-    #   "image_link": "https://images.unsplash.com/photo-1543900694-133f37abaaa5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=400&q=60",
-    #   "past_shows": [{
-    #     "artist_id": 4,
-    #     "artist_name": "Guns N Petals",
-    #     "artist_image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
-    #     "start_time": "2019-05-21T21:30:00.000Z"
-    #   }],
-    #   "upcoming_shows": [],
-    #   "past_shows_count": 1,
-    #   "upcoming_shows_count": 0,
-    # }
     data = Venue.query.get(venue_id)
-    # print("data>>>>", data)
+    shows = Show.query.filter_by(venue_id=venue_id).all()
+    upcoming_shows = []
+    past_shows = []
+    current_time = datetime.now()
+    # venue = Venue.query.get(venue_id)
+    # upcoming_shows = (
+    #     db.session.query(Show)
+    #     .join(Venue)
+    #     .filter(Show.start_time > datetime.now())
+    #     .all()
+    # )
+    # past_shows = (
+    #     db.session.query(Show)
+    #     .join(Venue)
+    #     .filter(Show.start_time < datetime.now())
+    #     .all()
+    # )
+    for show in shows:
+        item = {
+            "artist_id": show.artist_id,
+            "artist_name": show.artist.name,
+            "artist_image_link": show.artist.image_link,
+            "start_time": format_datetime(str(show.start_time)),
+        }
+        if show.start_time > current_time:
+            upcoming_shows.append(item)
+        else:
+            past_shows.append(item)
+
+    data.upcoming_shows = upcoming_shows
+    data.past_shows = past_shows
+    data.upcoming_shows_count = len(upcoming_shows)
+    data.past_shows_count = len(past_shows)
+    print("data>>>>", data, "<<<<<<<<", upcoming_shows)
     return render_template("pages/show_venue.html", venue=data)
 
 
@@ -276,33 +284,28 @@ def search_artists():
 
 @app.route("/artists/<artist_id>")
 def show_artist(artist_id):
-    # shows the artist page with the given artist_id
-    # TODO: replace with real artist data from the artist table, using artist_id
-    # data1={
-    #   "id": 4,
-    #   "name": "Guns N Petals",
-    #   "genres": ["Rock n Roll"],
-    #   "city": "San Francisco",
-    #   "state": "CA",
-    #   "phone": "326-123-5000",
-    #   "website": "https://www.gunsnpetalsband.com",
-    #   "facebook_link": "https://www.facebook.com/GunsNPetals",
-    #   "seeking_venue": True,
-    #   "seeking_description": "Looking for shows to perform at in the San Francisco Bay Area!",
-    #   "image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
-    #   "past_shows": [{
-    #     "venue_id": 1,
-    #     "venue_name": "The Musical Hop",
-    #     "venue_image_link": "https://images.unsplash.com/photo-1543900694-133f37abaaa5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=400&q=60",
-    #     "start_time": "2019-05-21T21:30:00.000Z"
-    #   }],
-    #   "upcoming_shows": [],
-    #   "past_shows_count": 1,
-    #   "upcoming_shows_count": 0,
-    # }
-    # data = list(filter(lambda d: d['id'] == artist_id, [data1, data2, data3]))[0]
     data = Artist.query.get(artist_id)
-    print("data>>>>", data)
+    shows = Show.query.filter_by(artist_id=artist_id).all()
+    upcoming_shows = []
+    past_shows = []
+    current_time = datetime.now()
+    for show in shows:
+        item = {
+            "venue_id": show.venue_id,
+            "venue_name": show.venue.name,
+            "venue_image_link": show.venue.image_link,
+            "start_time": format_datetime(str(show.start_time)),
+        }
+        if show.start_time > current_time:
+            upcoming_shows.append(item)
+        else:
+            past_shows.append(item)
+
+    data.upcoming_shows = upcoming_shows
+    data.past_shows = past_shows
+    data.upcoming_shows_count = len(upcoming_shows)
+    data.past_shows_count = len(past_shows)
+    print("data>>>>", data, "<<<<<<<<", upcoming_shows)
     return render_template("pages/show_artist.html", artist=data)
 
 
@@ -329,8 +332,6 @@ def edit_artist(artist_id):
 
 @app.route("/artists/<artist_id>/edit", methods=["POST"])
 def edit_artist_submission(artist_id):
-    # TODO: take values from the form submitted, and update existing
-    # artist record with ID <artist_id> using the new attributes
     try:
         artist = Artist.query.get(artist_id)
 
@@ -437,9 +438,6 @@ def create_artist_form():
 
 @app.route("/artists/create", methods=["POST"])
 def create_artist_submission():
-    # called upon submitting the new artist listing form
-    # TODO: insert form data as a new Venue record in the db, instead
-    # TODO: modify data to be the data object returned from db insertion
     try:
         name = request.form["name"]
         city = request.form["city"]
@@ -475,8 +473,6 @@ def create_artist_submission():
     finally:
         db.session.close()
 
-        # TODO: on unsuccessful db insert, flash an error instead.
-        # e.g., flash('An error occurred. Artist ' + data.name + ' could not be listed.')
     return redirect(url_for("artists"))
 
 
@@ -486,52 +482,24 @@ def create_artist_submission():
 
 @app.route("/shows")
 def shows():
-    # displays list of shows at /shows
-    # TODO: replace with real venues data.
-    data = [
-        {
-            "venue_id": 1,
-            "venue_name": "The Musical Hop",
-            "artist_id": 4,
-            "artist_name": "Guns N Petals",
-            "artist_image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
-            "start_time": "2019-05-21T21:30:00.000Z",
-        },
-        {
-            "venue_id": 3,
-            "venue_name": "Park Square Live Music & Coffee",
-            "artist_id": 5,
-            "artist_name": "Matt Quevedo",
-            "artist_image_link": "https://images.unsplash.com/photo-1495223153807-b916f75de8c5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=334&q=80",
-            "start_time": "2019-06-15T23:00:00.000Z",
-        },
-        {
-            "venue_id": 3,
-            "venue_name": "Park Square Live Music & Coffee",
-            "artist_id": 6,
-            "artist_name": "The Wild Sax Band",
-            "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-            "start_time": "2035-04-01T20:00:00.000Z",
-        },
-        {
-            "venue_id": 3,
-            "venue_name": "Park Square Live Music & Coffee",
-            "artist_id": 6,
-            "artist_name": "The Wild Sax Band",
-            "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-            "start_time": "2035-04-08T20:00:00.000Z",
-        },
-        {
-            "venue_id": 3,
-            "venue_name": "Park Square Live Music & Coffee",
-            "artist_id": 6,
-            "artist_name": "The Wild Sax Band",
-            "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-            "start_time": "2035-04-15T20:00:00.000Z",
-        },
-    ]
-    # data = Show.query.join(Venue).join(Artist).all()
-    # print(">>>>>>>>>>>>>>>>", data)
+    data = []
+    shows = Show.query.all()
+
+    print("hhhhhhhhhhhhhhhhh", shows)
+
+    for show in shows:
+        venue_item = Venue.query.get(show.venue_id)
+        artist_item = Artist.query.get(show.artist_id)
+        item = {
+            "venue_id": venue_item.id,
+            "venue_name": venue_item.name,
+            "artist_id": artist_item.id,
+            "artist_name": artist_item.name,
+            "artist_image_link": artist_item.image_link,
+            "start_time": format_datetime(str(show.start_time)),
+        }
+        data.append(item)
+    print(">>>>>>>>>>>>>>>>", data)
     return render_template("pages/shows.html", shows=data)
 
 
@@ -544,17 +512,6 @@ def create_shows():
 
 @app.route("/shows/create", methods=["POST"])
 def create_show_submission():
-    # called to create new shows in the db, upon submitting new show listing form
-    # TODO: insert form data as a new Show record in the db, instead
-
-    # on successful db insert, flash success
-    # flash('Show was successfully listed!')
-    # TODO: on unsuccessful db insert, flash an error instead.
-    # e.g., flash('An error occurred. Show could not be listed.')
-    # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
-    # return render_template('pages/home.html')
-    # form = ShowForm()
-    # error = False
     try:
         artist_id = request.form["artist_id"]
         venue_id = request.form["venue_id"]
@@ -574,13 +531,6 @@ def create_show_submission():
     finally:
         db.session.close()
     return render_template("pages/home.html")
-
-    # if not error:
-    # flash('Artist ' + request.form['name'] + ' was successfully listed!')
-    # on successful db insert, flash success
-
-    # TODO: on unsuccessful db insert, flash an error instead.
-    # e.g., flash('An error occurred. Artist ' + data.name + ' could not be listed.')
 
 
 @app.errorhandler(404)
