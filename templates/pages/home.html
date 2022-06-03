@@ -19,7 +19,47 @@
 		</h3>
 	</div>
 	<div class="col-sm-6 hidden-sm hidden-xs">
-		<img id="front-splash" src="{{ url_for('static',filename='img/front-splash.jpg') }}" alt="Front Photo of Musical Band" />
+		<img id="front-splash" src="{{ url_for('static',filename='img/front-splash.jpg') }}"
+			alt="Front Photo of Musical Band" />
+	</div>
+</div>
+
+<div class="row">
+	<div class="col-sm-6">
+		{% if venues %}
+		<p class="lead">Recently Added Venues</p>
+
+		<ul class="items">
+			{% for venue in venues %}
+			<li>
+				<a href="/venues/{{ venue.id }}">
+					<i class="fas fa-music"></i>
+					<div class="item">
+						<h5>{{ venue.name }}</h5>
+					</div>
+				</a>
+			</li>
+			{% endfor %}
+		</ul>
+		{% endif %}
+	</div>
+	<div class="col-sm-6">
+		{% if artists %}
+		<p class="lead">Recently Added Artists</p>
+
+		<ul class="items">
+			{% for artist in artists %}
+			<li>
+				<a href="/artists/{{ artist.id }}">
+					<i class="fas fa-users"></i>
+					<div class="item">
+						<h5>{{ artist.name }}</h5>
+					</div>
+				</a>
+			</li>
+			{% endfor %}
+		</ul>
+		{% endif %}
 	</div>
 </div>
 {% endblock %}
