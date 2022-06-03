@@ -84,9 +84,11 @@ def venues():
     )
 
     for location in locations:
-        venue_areas = Venue.query.filter_by(
-            city=location.city, state=location.state
-        ).all()
+        venue_areas = (
+            Venue.query.with_entities(Venue.id, Venue.name)
+            .filter_by(city=location.city, state=location.state)
+            .all()
+        )
         venues = []
         for venue in venue_areas:
             venues.append({"id": venue.id, "name": venue.name})
@@ -99,24 +101,16 @@ def venues():
 @app.route("/venues/search", methods=["POST"])
 def search_venues():
     search_term = request.form["search_term"]
-    print(">>>>>>>>>>>>>>>>>>", search_term)
-    search_result = Venue.query.filter(Venue.name.ilike(f"%{search_term}%")).all()
+    search_result = (
+        Venue.query.with_entities(Venue.id, Venue.name)
+        .filter(Venue.name.ilike(f"%{search_term}%"))
+        .all()
+    )
 
     response = {}
     response["count"] = len(search_result)
     response["data"] = search_result
 
-    print(">>>>>>>>>>>>>>>>>>", search_term, "<<<<<<<<", response)
-    # response = {
-    #     "count": 1,
-    #     "data": [
-    #         {
-    #             "id": 2,
-    #             "name": "The Dueling Pianos Bar",
-    #             "num_upcoming_shows": 0,
-    #         }
-    #     ],
-    # }
     return render_template(
         "pages/search_venues.html",
         results=response,
@@ -160,7 +154,6 @@ def show_venue(venue_id):
     data.past_shows = past_shows
     data.upcoming_shows_count = len(upcoming_shows)
     data.past_shows_count = len(past_shows)
-    print("data>>>>", data, "<<<<<<<<", upcoming_shows)
     return render_template("pages/show_venue.html", venue=data)
 
 
@@ -207,34 +200,28 @@ def create_venue_submission():
         db.session.commit()
         flash("Venue " + request.form["name"] + " was successfully listed!")
     except:
-        # error = True
         db.session.rollback()
-        # flash(
-        #     "An error occurred. Venue "
-        #     + request.get_json()["name"]
-        #     + " could not be listed."
-        # )
-        print(sys.exc_info())
+        flash(
+            "An error occurred. Venue " + request.form["name"] + " could not be listed."
+        )
     finally:
         db.session.close()
     return redirect(url_for("venues"))
-    # return render_template('pages/home.html')
-
-    # on successful db insert, flash success
-
-    # TODO: on unsuccessful db insert, flash an error instead.
-    # e.g., flash('An error occurred. Venue ' + data.name + ' could not be listed.')
-    # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
 
 
-@app.route("/venues/<venue_id>", methods=["DELETE"])
+@app.route("/venues/<venue_id>/delete", methods=["DELETE"])
 def delete_venue(venue_id):
-    # TODO: Complete this endpoint for taking a venue_id, and using
-    # SQLAlchemy ORM to delete a record. Handle cases where the session commit could fail.
-
-    # BONUS CHALLENGE: Implement a button to delete a Venue on a Venue Page, have it so that
-    # clicking that button delete it from the db then redirect the user to the homepage
-    return None
+    try:
+        venue = Venue.query.get(venue_id)
+        db.session.delete(venue)
+        db.session.commit()
+        flash("Venue successfully deleted.")
+    except:
+        db.session.rollback()
+        flash("An error occurred. venue could not be deleted.")
+    finally:
+        db.session.close()
+    return redirect(url_for("index"))
 
 
 #  Artists
@@ -251,7 +238,11 @@ def artists():
 def search_artists():
     search_term = request.form["search_term"]
 
-    search_result = Artist.query.filter(Artist.name.ilike(f"%{search_term}%")).all()
+    search_result = (
+        Artist.query.with_entities(Artist.id, Artist.name)
+        .filter(Artist.name.ilike(f"%{search_term}%"))
+        .all()
+    )
 
     response = {}
     response["count"] = len(search_result)
@@ -287,7 +278,6 @@ def show_artist(artist_id):
     data.past_shows = past_shows
     data.upcoming_shows_count = len(upcoming_shows)
     data.past_shows_count = len(past_shows)
-    print("data>>>>", data, "<<<<<<<<", upcoming_shows)
     return render_template("pages/show_artist.html", artist=data)
 
 
@@ -340,9 +330,14 @@ def edit_artist_submission(artist_id):
         artist.seeking_description = seeking_description
 
         db.session.commit()
+        flash("Artist " + request.form["name"] + " was successfully updated!")
     except:
         db.session.rollback()
-        print(sys.exc_info())
+        flash(
+            "An error occurred. Artist "
+            + request.form["name"]
+            + " could not be updated."
+        )
     finally:
         db.session.close()
 
@@ -399,10 +394,14 @@ def edit_venue_submission(venue_id):
         venue.seeking_description = seeking_description
 
         db.session.commit()
+        flash("Venue " + request.form["name"] + " was successfully updated!")
     except:
-        print("except block>>>>>>>")
         db.session.rollback()
-        print(sys.exc_info())
+        flash(
+            "An error occurred. Venue "
+            + request.form["name"]
+            + " could not be updated."
+        )
     finally:
         db.session.close()
     return redirect(url_for("show_venue", venue_id=venue_id))
@@ -445,13 +444,16 @@ def create_artist_submission():
             seeking_description=seeking_description,
         )
 
-        print("sent in", new_artist)
         db.session.add(new_artist)
         db.session.commit()
         flash("Artist " + request.form["name"] + " was successfully listed!")
     except:
         db.session.rollback()
-        print(sys.exc_info())
+        flash(
+            "An error occurred. Artist "
+            + request.form["name"]
+            + " could not be listed."
+        )
     finally:
         db.session.close()
 
@@ -504,10 +506,9 @@ def create_show_submission():
     except:
         db.session.rollback()
         flash("An error occurred. Show could not be listed.")
-        print(sys.exc_info())
     finally:
         db.session.close()
-    return render_template("pages/home.html")
+    return redirect(url_for("shows"))
 
 
 @app.errorhandler(404)
