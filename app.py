@@ -52,7 +52,21 @@ app.jinja_env.filters["datetime"] = format_datetime
 
 @app.route("/")
 def index():
-    return render_template("pages/home.html")
+    venues = []
+    artists = []
+    # venues = (
+    #     Venue.query.with_entities(Venue.id, Venue.name)
+    #     .order_by(Venue.date_created.desc())
+    #     .limit(10)
+    #     .all()
+    # )
+    # artists = (
+    #     Artist.query.with_entities(Artist.id, Artist.name)
+    #     .order_by(Artist.date_created.desc())
+    #     .limit(10)
+    #     .all()
+    # )
+    return render_template("pages/home.html", venues=venues, artists=artists)
 
 
 #  Venues
@@ -61,42 +75,24 @@ def index():
 
 @app.route("/venues")
 def venues():
-    # TODO: replace with real venues data.
-    #       num_upcoming_shows should be aggregated based on number of upcoming shows per venue.
-    # data=[{
-    #   "city": "San Francisco",
-    #   "state": "CA",
-    #   "venues": [{
-    #     "id": 1,
-    #     "name": "The Musical Hop",
-    #     "num_upcoming_shows": 0,
-    #   }, {
-    #     "id": 3,
-    #     "name": "Park Square Live Music & Coffee",
-    #     "num_upcoming_shows": 1,
-    #   }]
-    # }, {
-    #   "city": "New York",
-    #   "state": "NY",
-    #   "venues": [{
-    #     "id": 2,
-    #     "name": "The Dueling Pianos Bar",
-    #     "num_upcoming_shows": 0,
-    #   }]
-    # }]
-    # data=Venue.query.with_entities(Venue.id, Venue.name).group_by(Venue.city, Venue.state).all()
-    result = Venue.query.all()
-    index_city = {}
     data = []
-    for res in result:
-        if index_city.get(res.city, None):
-            index = index_city[res.city]
-            data[index]["venues"].append(res)
-        else:
-            index_city[res.city] = len(data)
-            temp = {"city": res.city, "state": res.state, "venues": [res]}
-            data.append(temp)
-    print("data>>>", data)
+    locations = (
+        Venue.query.with_entities(Venue.city, Venue.state)
+        .group_by(Venue.id, Venue.city, Venue.state)
+        .distinct()
+        .all()
+    )
+
+    for location in locations:
+        venue_areas = Venue.query.filter_by(
+            city=location.city, state=location.state
+        ).all()
+        venues = []
+        for venue in venue_areas:
+            venues.append({"id": venue.id, "name": venue.name})
+        venue_item = {"city": location.city, "state": location.state, "venues": venues}
+
+        data.append(venue_item)
     return render_template("pages/venues.html", areas=data)
 
 
