@@ -200,8 +200,6 @@ def create_venue_submission():
             seeking_description=seeking_description,
         )
 
-        print("sent in", new_venue)
-
         db.session.add(new_venue)
         db.session.commit()
         flash("Venue " + request.form["name"] + " was successfully listed!")
@@ -403,8 +401,8 @@ def edit_venue_submission(venue_id):
         phone = request.form["phone"]
         image_link = request.form["image_link"]
         facebook_link = request.form["facebook_link"]
-        genres = request.form["genres"]
-        seeking_talent = request.form["seeking_talent"]
+        genres = request.form.getlist("genres")
+        seeking_talent = request.form.get("seeking_talent", default=False, type=bool)
         website_link = request.form["website_link"]
         seeking_description = request.form["seeking_description"]
 
