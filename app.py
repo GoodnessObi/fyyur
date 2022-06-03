@@ -54,18 +54,18 @@ app.jinja_env.filters["datetime"] = format_datetime
 def index():
     venues = []
     artists = []
-    # venues = (
-    #     Venue.query.with_entities(Venue.id, Venue.name)
-    #     .order_by(Venue.date_created.desc())
-    #     .limit(10)
-    #     .all()
-    # )
-    # artists = (
-    #     Artist.query.with_entities(Artist.id, Artist.name)
-    #     .order_by(Artist.date_created.desc())
-    #     .limit(10)
-    #     .all()
-    # )
+    venues = (
+        Venue.query.with_entities(Venue.id, Venue.name)
+        .order_by(Venue.date_created.desc())
+        .limit(10)
+        .all()
+    )
+    artists = (
+        Artist.query.with_entities(Artist.id, Artist.name)
+        .order_by(Artist.date_created.desc())
+        .limit(10)
+        .all()
+    )
     return render_template("pages/home.html", venues=venues, artists=artists)
 
 
