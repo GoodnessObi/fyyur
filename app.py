@@ -23,19 +23,13 @@ from flask import (
 import logging
 from logging import Formatter, FileHandler
 from flask_wtf import Form
-from models import *
 from forms import *
 import sys
 
 # ----------------------------------------------------------------------------#
 # App Config.
 # ----------------------------------------------------------------------------#
-
-# app = Flask(__name__)
-# moment = Moment(app)
-# app.config.from_object("config")
-# db = SQLAlchemy(app)
-# migrate = Migrate(app, db)
+from models import *
 
 # ----------------------------------------------------------------------------#
 # Filters.
@@ -187,8 +181,8 @@ def create_venue_submission():
         phone = request.form["phone"]
         image_link = request.form["image_link"]
         facebook_link = request.form["facebook_link"]
-        genres = request.form["genres"]
-        seeking_talent = request.form["seeking_talent"]
+        genres = request.form.getlist("genres")
+        seeking_talent = request.form.get("seeking_talent", default=False, type=bool)
         website_link = request.form["website_link"]
         seeking_description = request.form["seeking_description"]
 
@@ -210,7 +204,7 @@ def create_venue_submission():
 
         db.session.add(new_venue)
         db.session.commit()
-        flash("Venue " + new_venue.name + " was successfully listed!")
+        flash("Venue " + request.form["name"] + " was successfully listed!")
     except:
         # error = True
         db.session.rollback()
