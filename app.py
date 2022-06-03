@@ -245,36 +245,22 @@ def delete_venue(venue_id):
 #  ----------------------------------------------------------------
 @app.route("/artists")
 def artists():
-    # TODO: replace with real data returned from querying the database
-    # data=[{
-    #   "id": 4,
-    #   "name": "Guns N Petals",
-    # }, {
-    #   "id": 5,
-    #   "name": "Matt Quevedo",
-    # }, {
-    #   "id": 6,
-    #   "name": "The Wild Sax Band",
-    # }]
-
-    # data=Artist.query.with_entities(Artist.id, Artist.name).all()
-    data = Artist.query.with_entities(Artist.id, Artist.name).all()
-    # data=Artist.query.options(load_only('email', 'id')).all()
-    print("data>>>", data)
+    data = (
+        Artist.query.with_entities(Artist.id, Artist.name).order_by(Artist.name).all()
+    )
     return render_template("pages/artists.html", artists=data)
 
 
 @app.route("/artists/search", methods=["POST"])
 def search_artists():
     search_term = request.form["search_term"]
-    print(">>>>>>>>>>>>>>>>>>", search_term)
+
     search_result = Artist.query.filter(Artist.name.ilike(f"%{search_term}%")).all()
 
     response = {}
     response["count"] = len(search_result)
     response["data"] = search_result
 
-    print(">>>>>>>>>>>>>>>>>>", search_term, "<<<<<<<<", response)
     return render_template(
         "pages/search_artists.html",
         results=response,
@@ -485,8 +471,6 @@ def shows():
     data = []
     shows = Show.query.all()
 
-    print("hhhhhhhhhhhhhhhhh", shows)
-
     for show in shows:
         venue_item = Venue.query.get(show.venue_id)
         artist_item = Artist.query.get(show.artist_id)
@@ -499,7 +483,6 @@ def shows():
             "start_time": format_datetime(str(show.start_time)),
         }
         data.append(item)
-    print(">>>>>>>>>>>>>>>>", data)
     return render_template("pages/shows.html", shows=data)
 
 
@@ -519,12 +502,10 @@ def create_show_submission():
 
         new_show = Show(artist_id=artist_id, venue_id=venue_id, start_time=start_time)
 
-        print("sent in>>>>>>>", new_show)
         db.session.add(new_show)
         db.session.commit()
         flash("Show was successfully listed!")
     except:
-        # error = True
         db.session.rollback()
         flash("An error occurred. Show could not be listed.")
         print(sys.exc_info())
